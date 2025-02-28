@@ -28,7 +28,7 @@
     <div id="map"></div>
 
     <script>
-        let map = L.map("map").setView([0, 0], 13); // Default view
+        let map = L.map("map").setView([0, 0], 13); // Default blank view
 
         // Load OpenStreetMap tiles
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -37,7 +37,7 @@
 
         let userMarker, hospitalMarkers = [], routeLayer;
 
-        // Get user location
+        // ✅ Always get the correct user location
         function getUserLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
@@ -45,25 +45,31 @@
                     let lng = position.coords.longitude;
                     let userLocation = [lat, lng];
 
+                    // Move the map to the current user location
                     map.setView(userLocation, 13);
 
-                    if (userMarker) map.removeLayer(userMarker); // Remove previous marker
-                    userMarker = L.marker(userLocation, { icon: L.icon({ iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", iconSize: [30, 30] }) })
-                        .addTo(map)
-                        .bindPopup("Your Location")
-                        .openPopup();
+                    // Remove previous user marker if it exists
+                    if (userMarker) map.removeLayer(userMarker);
+                    
+                    // Add new marker for the current user
+                    userMarker = L.marker(userLocation, {
+                        icon: L.icon({ iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", iconSize: [30, 30] })
+                    })
+                    .addTo(map)
+                    .bindPopup("Your Location")
+                    .openPopup();
                 }, () => {
-                    alert("Geolocation failed.");
+                    alert("Geolocation failed. Please allow location access.");
                 });
             } else {
                 alert("Geolocation is not supported by this browser.");
             }
         }
 
-        // Find hospitals using Nominatim API
+        // ✅ Find hospitals near the current user
         function findHospitals() {
             if (!userMarker) {
-                alert("Please enable location first.");
+                alert("Please allow location access first.");
                 return;
             }
 
@@ -73,15 +79,17 @@
             fetch(queryUrl)
                 .then(response => response.json())
                 .then(data => {
+                    // Remove previous hospital markers
                     if (hospitalMarkers.length) {
-                        hospitalMarkers.forEach(marker => map.removeLayer(marker)); // Remove previous markers
+                        hospitalMarkers.forEach(marker => map.removeLayer(marker));
                     }
                     hospitalMarkers = [];
 
                     data.forEach(place => {
                         let hospitalMarker = L.marker([place.lat, place.lon])
                             .addTo(map)
-                            .bindPopup(`<strong>${place.display_name}</strong><br><button onclick="getRoute(${place.lat}, ${place.lon})">Get Route</button>`);
+                            .bindPopup(`<strong>${place.display_name}</strong><br>
+                                        <button onclick="getRoute(${place.lat}, ${place.lon})">Get Route</button>`);
                         hospitalMarkers.push(hospitalMarker);
                     });
 
@@ -90,7 +98,7 @@
                 .catch(error => console.error("Error fetching hospitals:", error));
         }
 
-        // Get route using OSRM API
+        // ✅ Get route to the selected hospital
         function getRoute(destLat, destLon) {
             if (!userMarker) {
                 alert("Please enable location first.");
@@ -103,7 +111,8 @@
             fetch(routeUrl)
                 .then(response => response.json())
                 .then(data => {
-                    if (routeLayer) map.removeLayer(routeLayer); // Remove previous route
+                    // Remove previous route
+                    if (routeLayer) map.removeLayer(routeLayer);
 
                     let routeCoords = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
                     routeLayer = L.polyline(routeCoords, { color: "blue", weight: 5 }).addTo(map);
@@ -113,6 +122,7 @@
                 .catch(error => console.error("Error fetching route:", error));
         }
 
+        // ✅ Ensure every user sees their own location when they open the page
         window.onload = getUserLocation;
     </script>
 </body>

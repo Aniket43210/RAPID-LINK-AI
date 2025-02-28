@@ -24,6 +24,7 @@
 </head>
 <body>
     <h2>Find Nearby Hospitals</h2>
+    <button onclick="getUserLocation()">Refresh Location</button>
     <button onclick="findHospitals()">Find Hospitals</button>
     <div id="map"></div>
 
@@ -37,7 +38,7 @@
 
         let userMarker, hospitalMarkers = [], routeLayer;
 
-        // ✅ Always get the correct user location
+        // ✅ Always get fresh user location
         function getUserLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
@@ -69,7 +70,7 @@
         // ✅ Find hospitals near the current user
         function findHospitals() {
             if (!userMarker) {
-                alert("Please allow location access first.");
+                alert("Please enable location first.");
                 return;
             }
 
